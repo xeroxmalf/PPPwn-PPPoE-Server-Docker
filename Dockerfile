@@ -8,7 +8,7 @@ ENV tz America/Toronto
 RUN echo "$tz" > /etc/timezone && \
 	apt-get update && \
 	apt-get install -y locales pppoe iputils-ping \
-	vim-tiny iptables net-tools dnsutils && \
+	vim-tiny iptables net-tools dnsutils iproute2 && \
 	locale-gen en_US.UTF-8 && \
 	apt-get clean
 
