@@ -1,0 +1,17 @@
+services:
+  pppoe:
+    build: .
+    privileged: true
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    restart: always
+    container_name: pppoe
+    environment:
+    - PPPOE_DNS1=1.1.1.1
+    - PPPOE_DNS2=1.0.0.1
+    - PPPOE_LOCAL=192.168.2.1
+    - PPPOE_REMOTE=192.168.2.2
+    - PPPOE_NUM=1
+    - PPPOE_IFACE=eth0
+    - FIRMWAREVERSION=1100
