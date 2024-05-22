@@ -29,7 +29,7 @@ sysctl net.ipv4.ip_forward=1
 sysctl net.ipv4.conf.all.route_localnet=1
 
 echo "Starting pppwn++"
-/usr/local/bin/pppwn --interface "${PPPOE_IFACE:-eth0}" --fw "${FIRMWAREVERSION:-1100}" --stage1 /stages/stage1_"${FIRMWAREVERSION:-1100}".bin --stage2 /stages/stage2_"${FIRMWAREVERSION:-1100}".bin --auto-retry
+/usr/local/bin/pppwn --interface "${PPPOE_IFACE:-eth0}" --fw "${FIRMWAREVERSION:-1100}" --stage1 /stages/"${STAGE_1:-stage1_1100.bin}" --stage2 /stages/"${STAGE_2:-stage2_1100.bin}" --auto-retry
 
 echo "Taking ${PPPOE_IFACE:-eth0} down"
 ip link set "${PPPOE_IFACE:-eth0}" down

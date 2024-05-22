@@ -8,6 +8,10 @@ services:
       - NET_ADMIN
     restart: always
     container_name: pppwn-pppoe
+#    Uncomment volumes to use newer or different stages
+#    Also change the STAGE_1 and 2 var to match the new filenames
+#    volumes:
+#    - /some/host/path/with/stages:/stages
     environment:
     - PPPOE_DNS1=1.1.1.1
     - PPPOE_DNS2=1.0.0.1
@@ -16,4 +20,8 @@ services:
     - PPPOE_SUBNET=192.168.2.0
     - PPPOE_NUM=1
     - PPPOE_IFACE=eth0
+#     Currently included bins for 9.00 and 11.00.
+#     Make sure to not use a period in the firmware version or it will error
     - FIRMWAREVERSION=1100
+    - STAGE_1=stage1_1100.bin
+    - STAGE_2=stage2_1100.bin
