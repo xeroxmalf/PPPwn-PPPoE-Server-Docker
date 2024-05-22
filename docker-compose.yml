@@ -1,12 +1,13 @@
 services:
   pppoe:
     build: .
+    image: pppwn-pppoe
     privileged: true
     network_mode: host
     cap_add:
       - NET_ADMIN
     restart: always
-    container_name: pppoe
+    container_name: pppwn-pppoe
     environment:
     - PPPOE_DNS1=1.1.1.1
     - PPPOE_DNS2=1.0.0.1
