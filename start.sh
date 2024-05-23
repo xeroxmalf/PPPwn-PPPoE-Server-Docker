@@ -28,8 +28,33 @@ echo "Setting sysctl forwarding config"
 sysctl net.ipv4.ip_forward=1
 sysctl net.ipv4.conf.all.route_localnet=1
 
+#echo "Downloading latest nightly pppwn++"
+#wget https://nightly.link/xfangfang/PPPwn_cpp/workflows/ci.yaml/main/x86_64-linux-musl.zip -O /tmp/pppwn.zip
+#unzip /tmp/pppwn.zip -d /tmp
+#tar xzvf /tmp/pppwn.tar.gz -C /tmp
+#mv /tmp/pppwn /usr/local/bin/pppwn
+
+echo "Cloning and building pppwn++ dev branch"
+git clone -b dev https://github.com/xfangfang/PPPwn_cpp.git /tmp/pppwn
+cd /tmp/pppwn
+cmake -B build
+cmake --build build -t pppwn
+mv build/pppwn /usr/local/bin/pppwn
+
+echo "Downloading and building latest stages"
+git clone --recursive -b goldhen https://github.com/SiSTR0/PPPwn /tmp/stages
+cd /tmp/stages
+mkdir /stages
+echo "Making stage 1 for ${FIRMWAREVERSION:-1100}"
+make -C stage1 FW="${FIRMWAREVERSION:-1100}" clean && make -C stage1 FW="${FIRMWAREVERSION:-1100}" && mv stage1/stage1.bin /stages/"${STAGE_1:-stage1_1100.bin}"
+echo "Making stage 2 for ${FIRMWAREVERSION:-1100}"
+make -C stage2 FW="${FIRMWAREVERSION:-1100}" clean && make -C stage2 FW="${FIRMWAREVERSION:-1100}" && mv stage2/stage2.bin /stages/"${STAGE_2:-stage2_1100.bin}"
+
 echo "Starting pppwn++"
-/usr/local/bin/pppwn --interface "${PPPOE_IFACE:-eth0}" --fw "${FIRMWAREVERSION:-1100}" --stage1 /stages/"${STAGE_1:-stage1_1100.bin}" --stage2 /stages/"${STAGE_2:-stage2_1100.bin}" --auto-retry
+until /usr/local/bin/pppwn --interface "${PPPOE_IFACE:-eth0}" --fw "${FIRMWAREVERSION:-1100}" --stage1 /stages/"${STAGE_1:-stage1_1100.bin}" --stage2 /stages/"${STAGE_2:-stage2_1100.bin}" --auto-retry;
+do
+	echo "Trying again unclean exit";
+done
 
 echo "Taking ${PPPOE_IFACE:-eth0} down"
 ip link set "${PPPOE_IFACE:-eth0}" down

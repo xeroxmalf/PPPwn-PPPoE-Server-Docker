@@ -1,13 +1,13 @@
 services:
   pppoe:
     build: .
-    image: pppwn-pppoe
+    image: docker-pppwn-pppoe-server
     privileged: true
     network_mode: host
     cap_add:
       - NET_ADMIN
     restart: always
-    container_name: pppwn-pppoe
+    container_name: pppwn-pppoe-server
 #    Uncomment volumes to use newer or different stages
 #    Also change the STAGE_1 and 2 var to match the new filenames
 #    volumes:
