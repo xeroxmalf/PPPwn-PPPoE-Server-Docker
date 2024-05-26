@@ -31,6 +31,8 @@ sysctl net.ipv4.conf.all.route_localnet=1
 echo "Clean up"
 rm -rf /tmp/pppwn
 rm -rf /tmp/stages
+rm -rf /usr/local/bin/pppwn
+rm -rf /stages
 
 echo "Cloning and building pppwn++ dev branch"
 git clone https://github.com/xfangfang/PPPwn_cpp.git /tmp/pppwn
