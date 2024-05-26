@@ -24,31 +24,69 @@ EOF
 
 sleep 5
 
+## functions
+build_pppwn () {
+	rm -rf /usr/local/bin/pppwn
+	echo "Cloning and building pppwn++ dev branch"
+	git clone https://github.com/xfangfang/PPPwn_cpp.git /tmp/pppwn
+	cd /tmp/pppwn
+	cmake -B build
+	cmake --build build -t pppwn
+	mv build/pppwn /usr/local/bin/pppwn
+}
+
+build_stages () {
+	rm -rf /stages
+	echo "Downloading and building latest stages"
+	git clone --recursive -b goldhen https://github.com/SiSTR0/PPPwn /tmp/stages
+	cd /tmp/stages
+	mkdir /stages
+	echo "Making stage 1 for ${FIRMWAREVERSION:-1100}"
+	make -C stage1 FW="${FIRMWAREVERSION:-1100}" clean && make -C stage1 FW="${FIRMWAREVERSION:-1100}" && mv stage1/stage1.bin /stages/"${STAGE_1:-stage1_1100.bin}"
+	echo "Making stage 2 for ${FIRMWAREVERSION:-1100}"
+	make -C stage2 FW="${FIRMWAREVERSION:-1100}" clean && make -C stage2 FW="${FIRMWAREVERSION:-1100}" && mv stage2/stage2.bin /stages/"${STAGE_2:-stage2_1100.bin}"
+}
+
+check_stages () {
+	if [ -f /stages/"${STAGE_1:-stage1_1100.bin}" ]; then
+		if test "`find /stages/${STAGE_1:-stage1_1100.bin} -mmin +1440`"; then
+			echo "Stages older than 24hr, building"
+			build_stages
+		else
+			echo "Stages less than 24hr old, not rebuilding"
+		fi
+	else
+		echo "Stage doesn't exist, building"
+		build_stages
+	fi
+}
+
+check_pppwn () {
+	if [ -f /usr/local/bin/pppwn ]; then
+		if test "`find /usr/local/bin/pppwn -mmin +1440`"; then
+			echo "PPPwn exists but older than 24hr, building"
+			build_pppwn
+		else
+			echo "PPPwn exists but newer than 24hr, not building"
+			check_stages
+		fi
+	else
+		echo "PPPwn doesn't exist, building"
+		build_pppwn
+		check_stages
+	fi
+}
+
 echo "Setting sysctl forwarding config"
 sysctl net.ipv4.ip_forward=1
 sysctl net.ipv4.conf.all.route_localnet=1
 
-echo "Clean up"
+echo "Clean up git dirs"
 rm -rf /tmp/pppwn
 rm -rf /tmp/stages
-rm -rf /usr/local/bin/pppwn
-rm -rf /stages
 
-echo "Cloning and building pppwn++ dev branch"
-git clone https://github.com/xfangfang/PPPwn_cpp.git /tmp/pppwn
-cd /tmp/pppwn
-cmake -B build
-cmake --build build -t pppwn
-mv build/pppwn /usr/local/bin/pppwn
-
-echo "Downloading and building latest stages"
-git clone --recursive -b goldhen https://github.com/SiSTR0/PPPwn /tmp/stages
-cd /tmp/stages
-mkdir /stages
-echo "Making stage 1 for ${FIRMWAREVERSION:-1100}"
-make -C stage1 FW="${FIRMWAREVERSION:-1100}" clean && make -C stage1 FW="${FIRMWAREVERSION:-1100}" && mv stage1/stage1.bin /stages/"${STAGE_1:-stage1_1100.bin}"
-echo "Making stage 2 for ${FIRMWAREVERSION:-1100}"
-make -C stage2 FW="${FIRMWAREVERSION:-1100}" clean && make -C stage2 FW="${FIRMWAREVERSION:-1100}" && mv stage2/stage2.bin /stages/"${STAGE_2:-stage2_1100.bin}"
+echo "Check for bins and clean up"
+check_pppwn
 
 echo "Starting pppwn++"
 until /usr/local/bin/pppwn --interface "${PPPOE_IFACE:-eth0}" --fw "${FIRMWAREVERSION:-1100}" --stage1 /stages/"${STAGE_1:-stage1_1100.bin}" --stage2 /stages/"${STAGE_2:-stage2_1100.bin}" --auto-retry;
@@ -56,13 +94,13 @@ do
 	echo "Trying again unclean exit";
 done
 
-echo "Taking ${PPPOE_IFACE:-eth0} down"
-ip link set "${PPPOE_IFACE:-eth0}" down
-sleep 10
+#echo "Taking ${PPPOE_IFACE:-eth0} down"
+#ip link set "${PPPOE_IFACE:-eth0}" down
+#sleep 10
 
-echo "Bringing ${PPPOE_IFACE:-eth0} up"
-ip link set "${PPPOE_IFACE:-eth0}" up
-sleep 10
+#echo "Bringing ${PPPOE_IFACE:-eth0} up"
+#ip link set "${PPPOE_IFACE:-eth0}" up
+#sleep 10
 
 echo "Starting PPPoE server"
 pppoe-server -T 60 -C PS4 -S PS4 -I "${PPPOE_IFACE:-eth0}" -L "${PPPOE_LOCAL:-192.168.2.1}" -R "${PPPOE_REMOTE:-192.168.2.2}" -N "${PPPOE_NUM:-1}"
@@ -72,10 +110,6 @@ echo "Setting up iptables masquerading"
 iptables -P INPUT ACCEPT
 iptables -P FORWARD ACCEPT
 iptables -P OUTPUT ACCEPT
-#iptables -t nat -F
-#iptables -t mangle -F
-#iptables -F
-#iptables -X
 iptables -t nat -I PREROUTING -p tcp --dport 2121 -j DNAT --to 192.168.2.2:2121
 iptables -t nat -I PREROUTING -p tcp --dport 3232 -j DNAT --to 192.168.2.2:3232
 iptables -t nat -I PREROUTING -p tcp --dport 9090 -j DNAT --to 192.168.2.2:9090
