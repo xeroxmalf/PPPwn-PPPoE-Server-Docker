@@ -28,14 +28,12 @@ echo "Setting sysctl forwarding config"
 sysctl net.ipv4.ip_forward=1
 sysctl net.ipv4.conf.all.route_localnet=1
 
-#echo "Downloading latest nightly pppwn++"
-#wget https://nightly.link/xfangfang/PPPwn_cpp/workflows/ci.yaml/main/x86_64-linux-musl.zip -O /tmp/pppwn.zip
-#unzip /tmp/pppwn.zip -d /tmp
-#tar xzvf /tmp/pppwn.tar.gz -C /tmp
-#mv /tmp/pppwn /usr/local/bin/pppwn
+echo "Clean up"
+rm -rf /tmp/pppwn
+rm -rf /tmp/stages
 
 echo "Cloning and building pppwn++ dev branch"
-git clone -b dev https://github.com/xfangfang/PPPwn_cpp.git /tmp/pppwn
+git clone https://github.com/xfangfang/PPPwn_cpp.git /tmp/pppwn
 cd /tmp/pppwn
 cmake -B build
 cmake --build build -t pppwn
