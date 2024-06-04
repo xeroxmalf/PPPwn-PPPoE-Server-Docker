@@ -1,27 +1,33 @@
 services:
   pppoe:
     build: .
-    image: docker-pppwn-pppoe-server
+    image: pppwn-pppoe
     privileged: true
-    network_mode: host
     cap_add:
       - NET_ADMIN
     restart: always
-    container_name: pppwn-pppoe-server
-#    Uncomment volumes to use newer or different stages
-#    Also change the STAGE_1 and 2 var to match the new filenames
-#    volumes:
-#    - /some/host/path/with/stages:/stages
+    container_name: pppwn
+    networks:
+      - vlan
     environment:
-    - PPPOE_DNS1=1.1.1.1
-    - PPPOE_DNS2=1.0.0.1
-    - PPPOE_LOCAL=192.168.2.1
-    - PPPOE_REMOTE=192.168.2.2
-    - PPPOE_SUBNET=192.168.2.0
-    - PPPOE_NUM=1
-    - PPPOE_IFACE=eth0
-#     Currently included bins for 9.00 and 11.00.
-#     Make sure to not use a period in the firmware version or it will error
-    - FIRMWAREVERSION=1100
-    - STAGE_1=stage1_1100.bin
-    - STAGE_2=stage2_1100.bin
+      - PPPOE_DNS1=1.1.1.1
+      - PPPOE_DNS2=1.0.0.1
+      - PPPOE_LOCAL=192.168.2.1
+      - PPPOE_REMOTE=192.168.2.2
+      - PPPOE_SUBNET=192.168.2.0
+      - PPPOE_NUM=1
+      - PPPOE_IFACE=eth0
+      - FIRMWAREVERSION=1100
+      - STAGE_1=stage1_1100.bin
+      - STAGE_2=stage2_1100.bin
+
+networks:
+  vlan:
+    driver: macvlan
+    driver_opts:
+      parent: enp3s0
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: 192.168.250.0/24
+        - subnet: fe80::/64

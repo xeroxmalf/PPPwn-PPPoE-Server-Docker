@@ -4,7 +4,6 @@ cat >/etc/ppp/pppoe-server-options <<-EOF
 ms-dns ${PPPOE_DNS1:-1.1.1.1}
 ms-dns ${PPPOE_DNS2:-1.0.0.1}
 auth
-proxyarp
 debug 1
 logfile /var/log/pppd.log
 lcp-echo-failure 3
@@ -27,7 +26,7 @@ sleep 5
 ## functions
 build_pppwn () {
 	rm -rf /usr/local/bin/pppwn
-	echo "Cloning and building pppwn++ dev branch"
+	echo "Cloning and building pppwn++"
 	git clone https://github.com/xfangfang/PPPwn_cpp.git /tmp/pppwn
 	cd /tmp/pppwn
 	cmake -B build
@@ -78,8 +77,8 @@ check_pppwn () {
 }
 
 echo "Setting sysctl forwarding config"
-sysctl net.ipv4.ip_forward=1
-sysctl net.ipv4.conf.all.route_localnet=1
+sysctl -w net.ipv4.ip_forward=1
+sysctl -w net.ipv4.conf.all.route_localnet=1
 
 echo "Clean up git dirs"
 rm -rf /tmp/pppwn
@@ -93,14 +92,6 @@ until /usr/local/bin/pppwn --interface "${PPPOE_IFACE:-eth0}" --fw "${FIRMWAREVE
 do
 	echo "Trying again unclean exit";
 done
-
-#echo "Taking ${PPPOE_IFACE:-eth0} down"
-#ip link set "${PPPOE_IFACE:-eth0}" down
-#sleep 10
-
-#echo "Bringing ${PPPOE_IFACE:-eth0} up"
-#ip link set "${PPPOE_IFACE:-eth0}" up
-#sleep 10
 
 echo "Starting PPPoE server"
 pppoe-server -T 60 -C PS4 -S PS4 -I "${PPPOE_IFACE:-eth0}" -L "${PPPOE_LOCAL:-192.168.2.1}" -R "${PPPOE_REMOTE:-192.168.2.2}" -N "${PPPOE_NUM:-1}"
